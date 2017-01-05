@@ -13,13 +13,14 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from concurrent import futures
+from collections import namedtuple
 
 
 BASE_URL = 'http://www.indeed.com'
 SEARCH_URL = 'https://www.indeed.com/jobs?{0}'
 NUM_THREADS = 50
 
-
+Posting = namedtuple('Posting', ['url', 'text'])
 
 def get_response(url):
     """ Opens the url. """
@@ -116,25 +117,25 @@ def get_posting(url):
     try:
         redirected = get_response(url).geturl()
         text = get_text(redirected)
-        return redirected,text
+        return Posting(redirected,text)
     except:
-        return None,None
+        return None
 
 
 def get_job_postings(links):
     """ Returns all job postings associated with the list
         of Indeed.com job links. A posting is a pair
         <url>,<text>. """
-    postings = {}
+    postings = []
     count = 0
     with futures.ThreadPoolExecutor(NUM_THREADS) as ex:
         to_do = [ex.submit(get_posting,link) for link in links]
         done = futures.as_completed(to_do)
         done = tqdm.tqdm(done, total=len(links))
         for future in done:
-            k,v = future.result()
-            if v is not None:
-                postings[k] = v
+            posting = future.result()
+            if posting is not None:
+                postings.append(posting)
     return postings
 
 def save_postings(postings, filename):
@@ -143,7 +144,7 @@ def save_postings(postings, filename):
 
 def load_postings(filename):
     with open(filename) as f:
-        return json.load(f)
+        return [Posting(*data) for data in json.load(f)]
 
 def main(query,location,outfile):
     print("Getting job links...")
@@ -158,6 +159,6 @@ if __name__=="__main__":
     try:
         query,location,outfile = sys.argv[1:]
     except:
-        print("Error: Usage is python3 indeed.py <query> <location> <outfile>")
+        print("Error: Usage is python3 jobscrape.py <query> <location> <outfile>")
         sys.exit()
     main(query,location,outfile)

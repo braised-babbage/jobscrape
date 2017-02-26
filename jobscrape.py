@@ -11,21 +11,23 @@ import json
 import sys
 from bs4 import BeautifulSoup
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, URLError
 from concurrent import futures
 from collections import namedtuple
 
 
 BASE_URL = 'http://www.indeed.com'
 SEARCH_URL = 'https://www.indeed.com/jobs?{0}'
-NUM_THREADS = 50
+NUM_THREADS = 8
+TIMEOUT_SECS = 30
 
 Posting = namedtuple('Posting', ['url', 'text'])
 
 def get_response(url):
     """ Opens the url. """
     req = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    return urlopen(req)
+    return urlopen(req,timeout=TIMEOUT_SECS)
+# error handling?
 
 
 def make_soup(url):

@@ -35,11 +35,15 @@ def load_datasets():
     boston = jobscrape.load_postings("boston_data_science_feb_20.txt")
     newyork = jobscrape.load_postings("newyork_data_science_feb_20.txt")
     
-    return (Corpus(texts(seattle)),
-            Corpus(texts(sanfran)),
+    
+    data = [Corpus(texts(boston)),
             Corpus(texts(denver)),
-            Corpus(texts(boston)),
-            Corpus(texts(newyork)))
+            Corpus(texts(newyork)),
+            Corpus(texts(sanfran)),
+            Corpus(texts(seattle))]
+    names = ["Boston", "Denver", "NYC", "SF", "Seattle"]
+
+    return data,names
 
             
 def frequencies(corpus, queries):
@@ -57,14 +61,14 @@ def abbrv(strings):
 
 def degree_plots(data,names,filename=None):
     n = len(data)
-    f, axes = plt.subplots(1,n,sharey = True,figsize=(3*n,5))
+    f, axes = plt.subplots(1,n,sharey = True,figsize=(2*n,10/3))
     freqs = [frequencies(d,degrees) for d in data]
     ymax = max([p for ft in freqs for p,_ in ft])
     for i in range(n):
         barplot(axes[i],frequencies(data[i],degrees),
                 ymax=ymax, labels=degree_labels,title=names[i])
     if filename is not None:
-        plt.savefig(filename)
+        plt.savefig(filename,bbox_inches="tight")
     plt.show()
 
 def language_plots(data,name):
@@ -85,6 +89,8 @@ def make_keyword_plots(data,names):
                 ("sql", "SQL", "sql.png"),
                 ("nosql", "NoSQL", "nosql.png"),
                 ("hadoop", "Hadoop", "hadoop.png"),
+                ("spark", "Spark", "spark.png"),
+                ("mapreduce", "MapReduce", "mapreduce.png"),
                 ("redis", "Redis", "redis.png")]
     for key,title,filename in keywords:
         keyword_comparison_plot(data,names,key,title,filename)
@@ -93,7 +99,7 @@ def make_keyword_plots(data,names):
 def keyword_comparison_plot(data,names,key,title,filename=None):
     n = len(data)
     freqs = [frequencies(d,[key])[0] for d in data]
-    f,ax = plt.subplots(1,1)
+    f,ax = plt.subplots(1,1,figsize=(5,5))
     barplot(ax,freqs,labels=names,
             title=title,ymax=max([p for p,_ in freqs]))
     if filename is not None:
